@@ -19,7 +19,6 @@ import streamlit as st
 from supplier_selection_methods import (
     QUALITY_SCORE_WEIGHTS,
     calculate_quality_score,
-    goal_programming,
     preemptive_optimization,
     topsis,
     weighted_sum,
@@ -73,16 +72,12 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "method_topsis_best_when": "You want a balanced choice close to the ideal supplier.",
         "method_topsis_description": "Ranks suppliers by their distance from the ideal and anti-ideal solutions.",
         "method_topsis_example": "A supplier strong across all criteria but not necessarily first in any single one.",
-        "method_goal_programming_best_when": "You have explicit cost, quality, and delivery targets.",
-        "method_goal_programming_description": "Minimizes weighted deviations from target values while respecting capacities.",
-        "method_goal_programming_example": "Achieve quality ≥ 90, delivery ≤ 7 days, and cost ≤ €110.",
         "method_preemptive_best_when": "Some goals must always take priority over others.",
         "method_preemptive_description": "Optimizes objectives lexicographically, protecting higher-priority goals first.",
         "method_preemptive_example": "Meet quality first, then delivery, then minimize cost.",
         "method_guide_title": "Which Method Should You Choose?",
         "method_guide_weighted_sum": "Choose Weighted Sum when criteria are measurable and their relative importance can be represented with reliable weights.",
         "method_guide_topsis": "Choose TOPSIS when you want a balanced supplier that is closest to the ideal profile across all criteria.",
-        "method_guide_goal_programming": "Choose Goal Programming when cost, quality, and delivery targets must be met as closely as possible.",
         "method_guide_preemptive": "Choose Preemptive Optimization when business priorities are ranked and higher-priority goals cannot be sacrificed.",
         "kpi_total_suppliers": "Total Suppliers",
         "kpi_total_parts": "Total Parts",
@@ -99,7 +94,6 @@ Each criterion should have a clear definition, scoring scale, evidence requireme
 - **TOPSIS:** Ranks suppliers by their distance from an ideal supplier and an anti-ideal supplier.
 - **Weighted Sum:** Converts criteria to comparable utilities and calculates a weighted overall score.
 - **Preemptive Optimization:** Applies priorities lexicographically; higher-priority goals are protected before lower-priority goals.
-- **Goal Programming:** Minimizes weighted deviations from quality, delivery, and cost targets.
 """,
         "parts_title": "Parts Database",
         "parts_subtitle": "Manage part information used throughout supplier evaluation and optimization workflows.",
@@ -362,8 +356,6 @@ Each criterion should have a clear definition, scoring scale, evidence requireme
         "optimization_method_weighted_sum_best_when": "Best when trade-offs between criteria are acceptable.",
         "optimization_method_topsis_summary": "Ranks suppliers based on distance from the ideal supplier.",
         "optimization_method_topsis_best_when": "Best when the primary objective is ranking alternatives.",
-        "optimization_method_goal_programming_summary": "Finds the supplier allocation that best satisfies predefined targets.",
-        "optimization_method_goal_programming_best_when": "Best when cost, quality, and delivery targets must be met.",
         "optimization_method_preemptive_summary": "Applies strict priorities where higher-priority criteria dominate.",
         "optimization_method_preemptive_best_when": "Best when business priorities cannot be traded off.",
         "optimization_upload_label": "Upload supplier dataset",
@@ -402,11 +394,6 @@ Each criterion should have a clear definition, scoring scale, evidence requireme
         "optimization_topsis_cost": "Cost is configured as a cost criterion (lower is better).",
         "optimization_topsis_benefits": "Quality and Delivery are configured as benefit criteria (higher is better).",
         "optimization_topsis_normalization": "The existing TOPSIS backend applies Euclidean normalization and ideal/anti-ideal ranking.",
-        "optimization_targets_title": "Target Values",
-        "optimization_target_cost": "Target Annual Purchasing Cost (EUR)",
-        "optimization_target_cost_unit": "The target uses the same Annual Purchasing Cost units as the uploaded supplier dataset.",
-        "optimization_target_quality": "Target Quality Score",
-        "optimization_target_delivery": "Target Delivery Score",
         "optimization_preemptive_title": "Priority Ordering",
         "optimization_priority_1": "Priority 1",
         "optimization_priority_2": "Priority 2",
@@ -495,7 +482,6 @@ Each criterion should have a clear definition, scoring scale, evidence requireme
         "minimum_quality_target": "Minimum quality target",
         "maximum_delivery_target": "Maximum delivery target",
         "maximum_cost_target": "Maximum cost target",
-        "goal_weights": "Goal-programming weights",
         "quality_goal_weight": "Quality goal weight",
         "delivery_goal_weight": "Delivery goal weight",
         "cost_goal_weight": "Cost goal weight",
@@ -510,9 +496,8 @@ Each criterion should have a clear definition, scoring scale, evidence requireme
         "error_read_upload": "Could not read the uploaded file: {error}",
         "error_empty_criterion": "At least one criterion is required; Capacity is not a criterion.",
         "error_capacity_required": "Add a Capacity column before running this method.",
-        "error_capacity_column": "Preemptive Optimization and Goal Programming require a Capacity column.",
+        "error_capacity_column": "Preemptive Optimization requires a Capacity column.",
         "error_weight_required": "At least one criterion weight must be greater than zero.",
-        "error_goal_weights": "At least one goal-programming weight must be greater than zero.",
         "error_analysis": "Analysis could not be completed: {error}",
         "choose_method_review": "Choose a method, review the model configuration, then run the analysis.",
         "error_table_supplier_column": "The table must contain a Supplier column.",
@@ -529,7 +514,6 @@ Each criterion should have a clear definition, scoring scale, evidence requireme
         "score_topsis": "TOPSIS score",
         "score_weighted_sum": "Weighted-sum score",
         "preemptive_allocation": "Preemptive allocation",
-        "goal_programming_allocation": "Goal-programming allocation",
         "metric_average_cost": "Average Cost",
         "metric_average_quality": "Average Quality",
         "metric_average_delivery": "Average Delivery",
@@ -546,7 +530,6 @@ Each criterion should have a clear definition, scoring scale, evidence requireme
         "method_topsis": "TOPSIS",
         "method_weighted_sum": "Weighted Sum",
         "method_preemptive": "Preemptive Optimization",
-        "method_goal_programming": "Goal Programming",
     },
     "TR": {
         "language": "Dil",
@@ -580,16 +563,12 @@ Each criterion should have a clear definition, scoring scale, evidence requireme
         "method_topsis_best_when": "İdeal tedarikçiye yakın, dengeli bir seçim istediğinizde.",
         "method_topsis_description": "Tedarikçileri ideal ve ideal olmayan çözümlere olan uzaklıklarına göre sıralar.",
         "method_topsis_example": "Tek bir kriterde ilk sırada olmasa da tüm kriterlerde güçlü olan bir tedarikçi.",
-        "method_goal_programming_best_when": "Açık maliyet, kalite ve teslimat hedefleriniz olduğunda.",
-        "method_goal_programming_description": "Kapasiteleri dikkate alarak hedef değerlerden sapmaları ağırlıklı biçimde en aza indirir.",
-        "method_goal_programming_example": "Kalite ≥ 90, teslimat ≤ 7 gün ve maliyet ≤ 110 € hedeflerine ulaşmak.",
         "method_preemptive_best_when": "Bazı hedeflerin diğerlerine göre her zaman öncelikli olması gerektiğinde.",
         "method_preemptive_description": "Amaçları sözlük sırasıyla optimize eder ve yüksek öncelikli hedefleri önce korur.",
         "method_preemptive_example": "Önce kaliteyi, sonra teslimatı karşılamak ve ardından maliyeti azaltmak.",
         "method_guide_title": "Hangi Yöntemi Seçmelisiniz?",
         "method_guide_weighted_sum": "Kriterler ölçülebilir olduğunda ve göreli önemleri güvenilir ağırlıklarla ifade edilebildiğinde Ağırlıklı Toplamı seçin.",
         "method_guide_topsis": "Tüm kriterlerde ideal profile en yakın dengeli tedarikçiyi istediğinizde TOPSIS'i seçin.",
-        "method_guide_goal_programming": "Maliyet, kalite ve teslimat hedeflerine mümkün olduğunca yaklaşmanız gerektiğinde Hedef Programlamayı seçin.",
         "method_guide_preemptive": "İş öncelikleri sıralı olduğunda ve yüksek öncelikli hedeflerden vazgeçilemediğinde Öncelikli Optimizasyonu seçin.",
         "kpi_total_suppliers": "Toplam Tedarikçi",
         "kpi_total_parts": "Toplam Parça",
@@ -606,7 +585,6 @@ Her kriterin net bir tanımı, puanlama ölçeği, kanıt gereksinimi, sorumlu d
 - **TOPSIS:** Tedarikçileri ideal ve ideal olmayan çözümlere olan uzaklıklarına göre sıralar.
 - **Ağırlıklı Toplam:** Kriterleri karşılaştırılabilir faydalara dönüştürür ve ağırlıklı toplam puan hesaplar.
 - **Öncelikli Optimizasyon:** Öncelikleri sözlük sırasıyla uygular; yüksek öncelikli hedefleri korur.
-- **Hedef Programlama:** Kalite, teslimat ve maliyet hedeflerinden ağırlıklı sapmaları en aza indirir.
 """,
         "parts_title": "Parça Veritabanı",
         "parts_subtitle": "Tedarikçi değerlendirme ve optimizasyon süreçlerinde kullanılan parça bilgilerini yönetin.",
@@ -869,8 +847,6 @@ Her kriterin net bir tanımı, puanlama ölçeği, kanıt gereksinimi, sorumlu d
         "optimization_method_weighted_sum_best_when": "Kriterler arasındaki ödünleşimler kabul edilebilir olduğunda uygundur.",
         "optimization_method_topsis_summary": "Tedarikçileri ideal tedarikçiye uzaklıklarına göre sıralar.",
         "optimization_method_topsis_best_when": "Birincil amaç alternatifleri sıralamak olduğunda uygundur.",
-        "optimization_method_goal_programming_summary": "Önceden belirlenen hedefleri en iyi karşılayan tedarikçi dağılımını bulur.",
-        "optimization_method_goal_programming_best_when": "Maliyet, kalite ve teslimat hedeflerine ulaşılması gerektiğinde uygundur.",
         "optimization_method_preemptive_summary": "Yüksek öncelikli kriterlerin baskın olduğu katı öncelikler uygular.",
         "optimization_method_preemptive_best_when": "İş öncelikleri arasında ödünleşim yapılamadığında uygundur.",
         "optimization_upload_label": "Tedarikçi veri kümesi yükleyin",
@@ -909,11 +885,6 @@ Her kriterin net bir tanımı, puanlama ölçeği, kanıt gereksinimi, sorumlu d
         "optimization_topsis_cost": "Maliyet, maliyet kriteri olarak yapılandırılır (düşük değer daha iyidir).",
         "optimization_topsis_benefits": "Kalite ve Teslimat, fayda kriteri olarak yapılandırılır (yüksek değer daha iyidir).",
         "optimization_topsis_normalization": "Mevcut TOPSIS arka ucu Öklid normalizasyonu ve ideal/ideal olmayan çözüm sıralamasını uygular.",
-        "optimization_targets_title": "Hedef Değerler",
-        "optimization_target_cost": "Hedef Yıllık Satın Alma Maliyeti (EUR)",
-        "optimization_target_cost_unit": "Hedef, yüklenen tedarikçi veri kümesiyle aynı Yıllık Satın Alma Maliyeti birimini kullanır.",
-        "optimization_target_quality": "Hedef Kalite Puanı",
-        "optimization_target_delivery": "Hedef Teslimat Puanı",
         "optimization_preemptive_title": "Öncelik Sıralaması",
         "optimization_priority_1": "Öncelik 1",
         "optimization_priority_2": "Öncelik 2",
@@ -1002,7 +973,6 @@ Her kriterin net bir tanımı, puanlama ölçeği, kanıt gereksinimi, sorumlu d
         "minimum_quality_target": "Minimum kalite hedefi",
         "maximum_delivery_target": "Maksimum teslimat hedefi",
         "maximum_cost_target": "Maksimum maliyet hedefi",
-        "goal_weights": "Hedef programlama ağırlıkları",
         "quality_goal_weight": "Kalite hedefi ağırlığı",
         "delivery_goal_weight": "Teslimat hedefi ağırlığı",
         "cost_goal_weight": "Maliyet hedefi ağırlığı",
@@ -1017,9 +987,8 @@ Her kriterin net bir tanımı, puanlama ölçeği, kanıt gereksinimi, sorumlu d
         "error_read_upload": "Yüklenen dosya okunamadı: {error}",
         "error_empty_criterion": "En az bir kriter gereklidir; Capacity bir kriter değildir.",
         "error_capacity_required": "Bu yöntemi çalıştırmadan önce Capacity sütunu ekleyin.",
-        "error_capacity_column": "Öncelikli Optimizasyon ve Hedef Programlama için Capacity sütunu gereklidir.",
+        "error_capacity_column": "Öncelikli Optimizasyon için Capacity sütunu gereklidir.",
         "error_weight_required": "En az bir kriter ağırlığı sıfırdan büyük olmalıdır.",
-        "error_goal_weights": "En az bir hedef programlama ağırlığı sıfırdan büyük olmalıdır.",
         "error_analysis": "Analiz tamamlanamadı: {error}",
         "choose_method_review": "Bir yöntem seçin, model yapılandırmasını inceleyin ve analizi çalıştırın.",
         "error_table_supplier_column": "Tabloda Supplier sütunu bulunmalıdır.",
@@ -1036,7 +1005,6 @@ Her kriterin net bir tanımı, puanlama ölçeği, kanıt gereksinimi, sorumlu d
         "score_topsis": "TOPSIS puanı",
         "score_weighted_sum": "Ağırlıklı toplam puanı",
         "preemptive_allocation": "Öncelikli dağıtım",
-        "goal_programming_allocation": "Hedef programlama dağıtımı",
         "metric_average_cost": "Ortalama Maliyet",
         "metric_average_quality": "Ortalama Kalite",
         "metric_average_delivery": "Ortalama Teslimat",
@@ -1053,7 +1021,6 @@ Her kriterin net bir tanımı, puanlama ölçeği, kanıt gereksinimi, sorumlu d
         "method_topsis": "TOPSIS",
         "method_weighted_sum": "Ağırlıklı Toplam",
         "method_preemptive": "Öncelikli Optimizasyon",
-        "method_goal_programming": "Hedef Programlama",
     },
     "DE": {
         "language": "Sprache",
@@ -1087,16 +1054,12 @@ Her kriterin net bir tanımı, puanlama ölçeği, kanıt gereksinimi, sorumlu d
         "method_topsis_best_when": "Sie eine ausgewogene Auswahl nahe am idealen Lieferanten wünschen.",
         "method_topsis_description": "Ordnet Lieferanten nach ihrer Entfernung zur idealen und anti-idealen Lösung.",
         "method_topsis_example": "Ein Lieferant, der über alle Kriterien hinweg stark ist, ohne bei einem einzelnen Kriterium führend zu sein.",
-        "method_goal_programming_best_when": "Sie konkrete Kosten-, Qualitäts- und Lieferziele haben.",
-        "method_goal_programming_description": "Minimiert gewichtete Abweichungen von Zielwerten unter Berücksichtigung der Kapazitäten.",
-        "method_goal_programming_example": "Qualität ≥ 90, Lieferung ≤ 7 Tage und Kosten ≤ 110 € erreichen.",
         "method_preemptive_best_when": "Einige Ziele immer Vorrang vor anderen haben müssen.",
         "method_preemptive_description": "Optimiert Ziele lexikografisch und schützt höher priorisierte Ziele zuerst.",
         "method_preemptive_example": "Zuerst Qualität erfüllen, dann Lieferung und anschließend Kosten minimieren.",
         "method_guide_title": "Welche Methode sollten Sie wählen?",
         "method_guide_weighted_sum": "Wählen Sie die gewichtete Summe, wenn Kriterien messbar sind und ihre relative Bedeutung mit zuverlässigen Gewichten dargestellt werden kann.",
         "method_guide_topsis": "Wählen Sie TOPSIS, wenn Sie einen ausgewogenen Lieferanten wünschen, der dem idealen Profil über alle Kriterien hinweg am nächsten kommt.",
-        "method_guide_goal_programming": "Wählen Sie Zielprogrammierung, wenn Kosten-, Qualitäts- und Lieferziele möglichst genau erreicht werden müssen.",
         "method_guide_preemptive": "Wählen Sie präemptive Optimierung, wenn Geschäftsprioritäten geordnet sind und höher priorisierte Ziele nicht geopfert werden dürfen.",
         "kpi_total_suppliers": "Lieferanten gesamt",
         "kpi_total_parts": "Teile gesamt",
@@ -1113,7 +1076,6 @@ Jedes Kriterium sollte eine klare Definition, Bewertungsskala, Nachweisanforderu
 - **TOPSIS:** Bewertet Lieferanten anhand ihrer Distanz zu einer idealen und einer Anti-Ideal-Lösung.
 - **Gewichtete Summe:** Überführt Kriterien in vergleichbare Nutzenwerte und berechnet einen gewichteten Gesamtscore.
 - **Präemptive Optimierung:** Wendet Prioritäten lexikografisch an und schützt höher priorisierte Ziele.
-- **Zielprogrammierung:** Minimiert gewichtete Abweichungen von Qualitäts-, Liefer- und Kostenzielen.
 """,
         "parts_title": "Teiledatenbank",
         "parts_subtitle": "Verwalten Sie Teileinformationen für Lieferantenbewertung und Optimierungsabläufe.",
@@ -1376,8 +1338,6 @@ Jedes Kriterium sollte eine klare Definition, Bewertungsskala, Nachweisanforderu
         "optimization_method_weighted_sum_best_when": "Geeignet, wenn Zielkonflikte zwischen Kriterien akzeptabel sind.",
         "optimization_method_topsis_summary": "Rangiert Lieferanten nach ihrer Distanz zum idealen Lieferanten.",
         "optimization_method_topsis_best_when": "Geeignet, wenn die Rangfolge von Alternativen das Hauptziel ist.",
-        "optimization_method_goal_programming_summary": "Findet die Lieferantenverteilung, die vorgegebene Ziele am besten erfüllt.",
-        "optimization_method_goal_programming_best_when": "Geeignet, wenn Kosten-, Qualitäts- und Lieferziele erfüllt werden müssen.",
         "optimization_method_preemptive_summary": "Wendet strikte Prioritäten an, wobei höhere Prioritäten dominieren.",
         "optimization_method_preemptive_best_when": "Geeignet, wenn Geschäftsprioritäten nicht gegeneinander abgewogen werden dürfen.",
         "optimization_upload_label": "Lieferantendatensatz hochladen",
@@ -1416,11 +1376,6 @@ Jedes Kriterium sollte eine klare Definition, Bewertungsskala, Nachweisanforderu
         "optimization_topsis_cost": "Kosten werden als Kostenkriterium konfiguriert (niedriger ist besser).",
         "optimization_topsis_benefits": "Qualität und Lieferung werden als Nutzenkriterien konfiguriert (höher ist besser).",
         "optimization_topsis_normalization": "Das bestehende TOPSIS-Backend verwendet euklidische Normalisierung sowie Ideal-/Anti-Ideal-Ranking.",
-        "optimization_targets_title": "Zielwerte",
-        "optimization_target_cost": "Ziel der jährlichen Einkaufskosten (EUR)",
-        "optimization_target_cost_unit": "Das Ziel verwendet dieselbe Einheit der jährlichen Einkaufskosten wie der hochgeladene Lieferantendatensatz.",
-        "optimization_target_quality": "Zielqualitätsscore",
-        "optimization_target_delivery": "Ziellieferscore",
         "optimization_preemptive_title": "Prioritätenfolge",
         "optimization_priority_1": "Priorität 1",
         "optimization_priority_2": "Priorität 2",
@@ -1509,7 +1464,6 @@ Jedes Kriterium sollte eine klare Definition, Bewertungsskala, Nachweisanforderu
         "minimum_quality_target": "Mindestqualitätsziel",
         "maximum_delivery_target": "Maximales Lieferziel",
         "maximum_cost_target": "Maximales Kostenziel",
-        "goal_weights": "Gewichte der Zielprogrammierung",
         "quality_goal_weight": "Gewicht Qualitätsziel",
         "delivery_goal_weight": "Gewicht Lieferziel",
         "cost_goal_weight": "Gewicht Kostenziel",
@@ -1524,9 +1478,8 @@ Jedes Kriterium sollte eine klare Definition, Bewertungsskala, Nachweisanforderu
         "error_read_upload": "Die hochgeladene Datei konnte nicht gelesen werden: {error}",
         "error_empty_criterion": "Mindestens ein Kriterium ist erforderlich; Capacity ist kein Kriterium.",
         "error_capacity_required": "Fügen Sie vor dem Start dieser Methode eine Capacity-Spalte hinzu.",
-        "error_capacity_column": "Präemptive Optimierung und Zielprogrammierung erfordern eine Capacity-Spalte.",
+        "error_capacity_column": "Präemptive Optimierung erfordert eine Capacity-Spalte.",
         "error_weight_required": "Mindestens ein Kriteriengewicht muss größer als null sein.",
-        "error_goal_weights": "Mindestens ein Zielprogrammierungsgewicht muss größer als null sein.",
         "error_analysis": "Die Analyse konnte nicht abgeschlossen werden: {error}",
         "choose_method_review": "Wählen Sie eine Methode, prüfen Sie die Modellkonfiguration und starten Sie die Analyse.",
         "error_table_supplier_column": "Die Tabelle muss eine Supplier-Spalte enthalten.",
@@ -1543,7 +1496,6 @@ Jedes Kriterium sollte eine klare Definition, Bewertungsskala, Nachweisanforderu
         "score_topsis": "TOPSIS-Score",
         "score_weighted_sum": "Score der gewichteten Summe",
         "preemptive_allocation": "Präemptive Verteilung",
-        "goal_programming_allocation": "Zielprogrammierungs-Verteilung",
         "metric_average_cost": "Durchschnittskosten",
         "metric_average_quality": "Durchschnittsqualität",
         "metric_average_delivery": "Durchschnittliche Lieferung",
@@ -1560,7 +1512,6 @@ Jedes Kriterium sollte eine klare Definition, Bewertungsskala, Nachweisanforderu
         "method_topsis": "TOPSIS",
         "method_weighted_sum": "Gewichtete Summe",
         "method_preemptive": "Präemptive Optimierung",
-        "method_goal_programming": "Zielprogrammierung",
     },
 }
 
@@ -2056,6 +2007,136 @@ def result_for_download(
 # -----------------------------------------------------------------------------
 
 
+
+def prepare_supplier_quality_data(data: pd.DataFrame) -> pd.DataFrame:
+    """Share the existing quality model between profile and comparison cards.
+
+    Uploaded scores are preserved. Missing scores use the same backend and
+    per-part reference population already used by the profile (before OSA).
+    """
+    data = data.copy().reset_index(drop=True)
+    data.columns = [str(column).strip() for column in data.columns]
+    aliases = {
+        "Supplier": ("Supplier Name", "Vendor"),
+        "Quality Score": ("Quality",),
+        "Inspection Time": ("Inspection Time for Defective Part", "Inspection Time (Hours)", "Inspection Time (Hrs)"),
+        "Process Capability": ("Process Capability (Cpk)",),
+        "Average RPN": ("FMEA Average RPN", "FMEA Risk (Average RPN)", "FMEA RPN"),
+        "Failure Rate": ("Failure Rate (%)", "Field Failure Rate"),
+        "OEM Experience": ("OEM Experience Score", "OEM Experience Points"),
+        "Part Number": (),
+        "Part Description": (),
+    }
+
+    def header_key(value: Any) -> str:
+        return "".join(char for char in str(value).casefold() if char.isalnum())
+
+    for canonical, alternatives in aliases.items():
+        matching = [
+            column for column in data.columns
+            if header_key(column) in {header_key(name) for name in (canonical, *alternatives)}
+        ]
+        if canonical in matching:
+            matching.remove(canonical)
+            matching.insert(0, canonical)
+        if matching:
+            # Prefer a populated canonical value; aliases may fill blank cells.
+            values = data[matching].replace(r"^\s*$", np.nan, regex=True)
+            data[canonical] = values.bfill(axis=1).iloc[:, 0]
+
+    def numeric_value(value: Any) -> float:
+        if isinstance(value, str):
+            value = "".join(value.strip().rstrip("%").split())
+            if "," in value and "." in value:
+                if value.rfind(",") > value.rfind("."):
+                    value = value.replace(".", "").replace(",", ".")
+                else:
+                    value = value.replace(",", "")
+            else:
+                value = value.replace(",", ".")
+        value = pd.to_numeric(value, errors="coerce")
+        return float(value) if pd.notna(value) and np.isfinite(value) else np.nan
+
+    for column in ("Quality Score", *QUALITY_SCORE_WEIGHTS):
+        if column in data.columns:
+            data[column] = data[column].map(numeric_value)
+    if "Quality Score" not in data.columns:
+        data["Quality Score"] = np.nan
+
+    required = list(QUALITY_SCORE_WEIGHTS)
+    if not set(required).issubset(data.columns):
+        return data
+    group_column = next(
+        (column for column in ("Part Number", "Part Description") if column in data.columns),
+        None,
+    )
+    groups = data.groupby(group_column, dropna=False, sort=False) if group_column else [(None, data)]
+    for _, group in groups:
+        missing = group.index[group["Quality Score"].isna()]
+        if missing.empty or group[required].isna().any().any():
+            continue
+        scores, _ = calculate_quality_score(group)
+        data.loc[missing, "Quality Score"] = scores.loc[missing]
+    return data
+
+
+def supplier_quality_record(
+    data: pd.DataFrame, supplier_record: pd.Series,
+) -> pd.Series | None:
+    """Match a supplier AND its part; never borrow another part's quality."""
+    if "Supplier" not in data.columns:
+        return None
+
+    def key(value: Any) -> str:
+        return " ".join(str(value).split()).casefold()
+
+    name = supplier_record.get("Supplier", supplier_record.get("Supplier Name", ""))
+    matches = data.loc[data["Supplier"].map(key) == key(name)]
+    if matches.empty:
+        return None
+
+    has_part_identifier = False
+    for column in ("Part Number", "Part Description"):
+        value = supplier_record.get(column)
+        if column not in data.columns or pd.isna(value) or not str(value).strip():
+            continue
+        has_part_identifier = True
+        part_matches = matches.loc[matches[column].map(key) == key(value)]
+        if len(part_matches) == 1:
+            return part_matches.iloc[0]
+        if len(part_matches) > 1:
+            return None
+    # Supplier-only matching is safe only for a unique record without part keys.
+    return matches.iloc[0] if not has_part_identifier and len(matches) == 1 else None
+
+
+def build_excel_report(
+    summary_rows: list[tuple[str, Any]],
+    ranking: pd.DataFrame,
+    performance: pd.DataFrame,
+) -> bytes:
+    """Build a real XLSX workbook using the explicitly declared Excel engine."""
+    from openpyxl.styles import Font, PatternFill
+
+    buffer = io.BytesIO()
+    with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
+        pd.DataFrame(summary_rows, columns=[t("column_metric"), t("column_value")]).to_excel(
+            writer, sheet_name="Summary", index=False,
+        )
+        ranking.to_excel(writer, sheet_name="Ranking", index=False)
+        performance.to_excel(writer, sheet_name="Performance", index=False)
+        for sheet in writer.book.worksheets:
+            sheet.freeze_panes = "A2"
+            sheet.auto_filter.ref = sheet.dimensions
+            for cell in sheet[1]:
+                cell.font = Font(bold=True, color="FFFFFF")
+                cell.fill = PatternFill("solid", fgColor="0B1F3A")
+            for column in sheet.columns:
+                width = min(55, max(14, max(len(str(cell.value or "")) for cell in column) + 2))
+                sheet.column_dimensions[column[0].column_letter].width = width
+    return buffer.getvalue()
+
+
 def homepage_page() -> None:
     """Render the corporate Homepage without changing portal functionality."""
     st.markdown(
@@ -2228,7 +2309,7 @@ def homepage_page() -> None:
             (t("homepage_kpi_parts"), "15"),
             (t("homepage_kpi_candidate_suppliers"), "45"),
             (t("homepage_kpi_qualified_suppliers"), "38"),
-            (t("homepage_kpi_optimization_models"), "4"),
+            (t("homepage_kpi_optimization_models"), "3"),
         ]
         for kpi_column, (label, value) in zip(kpi_columns, kpis):
             with kpi_column:
@@ -2328,17 +2409,8 @@ def homepage_page() -> None:
                 t("method_topsis_example"),
             )
 
-        third_method_column, fourth_method_column = st.columns(2, gap="large")
+        third_method_column, _ = st.columns(2, gap="large")
         with third_method_column:
-            render_method_card(
-                "goal_programming",
-                t("method_goal_programming"),
-                "#315b85",
-                t("method_goal_programming_best_when"),
-                t("method_goal_programming_description"),
-                t("method_goal_programming_example"),
-            )
-        with fourth_method_column:
             render_method_card(
                 "preemptive",
                 t("method_preemptive"),
@@ -2362,7 +2434,6 @@ def homepage_page() -> None:
                     <ul>
                         <li>{t("method_guide_weighted_sum")}</li>
                         <li>{t("method_guide_topsis")}</li>
-                        <li>{t("method_guide_goal_programming")}</li>
                         <li>{t("method_guide_preemptive")}</li>
                     </ul>
                 </div>
@@ -3069,6 +3140,112 @@ def supplier_database_page() -> None:
     # ------------------------------------------------------------------
     # Page header and KPI dashboard
     # ------------------------------------------------------------------
+    # Prepare one quality table for both the detail panel and comparison.
+    # Fall back to the same default dataset used by Optimization.
+    df = st.session_state.get("supplier_data")
+    if not isinstance(df, pd.DataFrame) or df.empty:
+        df = st.session_state.get("supplier_optimization_source_data")
+    if not isinstance(df, pd.DataFrame) or df.empty:
+        df = st.session_state.get("supplier_optimization_default_data")
+    if not isinstance(df, pd.DataFrame) or df.empty:
+        df = supplier_data.copy()
+
+    df = df.copy()
+    df.columns = [str(column).strip() for column in df.columns]
+
+    # When the page is opened before Optimization has initialized
+    # its shared default dataframe, enrich only the legacy local
+    # catalogue fallback with the same quality inputs used by the
+    # Optimization default dataset.
+    quality_input_columns = set(QUALITY_SCORE_WEIGHTS)
+    using_catalogue_fallback = (
+        "Record ID" in df.columns
+        and "Supplier Name" in df.columns
+        and "Supplier" not in df.columns
+    ) or not quality_input_columns.issubset(df.columns)
+    if using_catalogue_fallback and not {
+        "Record ID", "Supplier Name", "Part Number", "Part Description"
+    }.issubset(df.columns):
+        # An older upload does not contain the current quality inputs. Use the
+        # portal catalogue as the safe default instead of rendering N/A cards.
+        df = supplier_data.copy()
+    if using_catalogue_fallback:
+        catalogue_quality_rows: list[dict[str, Any]] = []
+        for _, catalogue_row in df.iterrows():
+            supplier_name = str(catalogue_row["Supplier Name"])
+            part_number = str(catalogue_row["Part Number"])
+            part_index = next(
+                (
+                    index
+                    for index, record in enumerate(part_records)
+                    if record[0] == part_number
+                ),
+                0,
+            )
+            candidate_names = part_records[part_index][-1]
+            candidate_position = (
+                candidate_names.index(supplier_name)
+                if supplier_name in candidate_names
+                else 0
+            )
+            supplier_index = (
+                supplier_names.index(supplier_name)
+                if supplier_name in supplier_names
+                else 0
+            )
+            catalogue_quality_rows.append(
+                {
+                    "Inspection Time": round(
+                        1.8
+                        + (
+                            (supplier_index + part_index * 2 + candidate_position)
+                            % 8
+                        )
+                        * 0.35,
+                        2,
+                    ),
+                    "Process Capability": round(
+                        1.28
+                        + (
+                            (supplier_index * 3 + part_index + candidate_position)
+                            % 8
+                        )
+                        * 0.06,
+                        2,
+                    ),
+                    "Average RPN": round(
+                        38
+                        + (
+                            (supplier_index * 7 + part_index * 5 + candidate_position * 3)
+                            % 12
+                        )
+                        * 6.5,
+                        1,
+                    ),
+                    "Failure Rate": round(
+                        0.08
+                        + (
+                            (supplier_index * 2 + part_index + candidate_position)
+                            % 9
+                        )
+                        * 0.08,
+                        2,
+                    ),
+                    "OEM Experience": int(
+                        oem_experience_scores.get(supplier_name, 40)
+                    ),
+                }
+            )
+        catalogue_quality_data = pd.DataFrame(
+            catalogue_quality_rows,
+            index=df.index,
+        )
+        for quality_column in catalogue_quality_data.columns:
+            if quality_column not in df.columns:
+                df[quality_column] = catalogue_quality_data[quality_column]
+
+    quality_data = prepare_supplier_quality_data(df)
+
     with st.container(key="supplier_database_content"):
         st.markdown(
             f"""
@@ -3306,245 +3483,14 @@ def supplier_database_page() -> None:
                     f'<div class="supplier-section-heading">{t("supplier_section_quality_performance")}</div>',
                     unsafe_allow_html=True,
                 )
-                # Section 4 reads directly from the shared supplier dataset.
-                # Fall back to the same default dataset used by Optimization.
-                df = st.session_state.get("supplier_data")
-                if not isinstance(df, pd.DataFrame) or df.empty:
-                    df = st.session_state.get("supplier_optimization_source_data")
-                if not isinstance(df, pd.DataFrame) or df.empty:
-                    df = st.session_state.get("supplier_optimization_default_data")
-                if not isinstance(df, pd.DataFrame) or df.empty:
-                    df = supplier_data.copy()
-
-                df = df.copy()
-                df.columns = [str(column).strip() for column in df.columns]
-
-                # When the page is opened before Optimization has initialized
-                # its shared default dataframe, enrich only the legacy local
-                # catalogue fallback with the same quality inputs used by the
-                # Optimization default dataset.
-                using_catalogue_fallback = (
-                    "Record ID" in df.columns
-                    and "Supplier Name" in df.columns
-                    and "Supplier" not in df.columns
-                )
-                if using_catalogue_fallback:
-                    catalogue_quality_rows: list[dict[str, Any]] = []
-                    for _, catalogue_row in df.iterrows():
-                        supplier_name = str(catalogue_row["Supplier Name"])
-                        part_number = str(catalogue_row["Part Number"])
-                        part_index = next(
-                            (
-                                index
-                                for index, record in enumerate(part_records)
-                                if record[0] == part_number
-                            ),
-                            0,
-                        )
-                        candidate_names = part_records[part_index][-1]
-                        candidate_position = (
-                            candidate_names.index(supplier_name)
-                            if supplier_name in candidate_names
-                            else 0
-                        )
-                        supplier_index = (
-                            supplier_names.index(supplier_name)
-                            if supplier_name in supplier_names
-                            else 0
-                        )
-                        catalogue_quality_rows.append(
-                            {
-                                "Inspection Time": round(
-                                    1.8
-                                    + (
-                                        (supplier_index + part_index * 2 + candidate_position)
-                                        % 8
-                                    )
-                                    * 0.35,
-                                    2,
-                                ),
-                                "Process Capability": round(
-                                    1.28
-                                    + (
-                                        (supplier_index * 3 + part_index + candidate_position)
-                                        % 8
-                                    )
-                                    * 0.06,
-                                    2,
-                                ),
-                                "Average RPN": round(
-                                    38
-                                    + (
-                                        (supplier_index * 7 + part_index * 5 + candidate_position * 3)
-                                        % 12
-                                    )
-                                    * 6.5,
-                                    1,
-                                ),
-                                "Failure Rate": round(
-                                    0.08
-                                    + (
-                                        (supplier_index * 2 + part_index + candidate_position)
-                                        % 9
-                                    )
-                                    * 0.08,
-                                    2,
-                                ),
-                                "OEM Experience": int(
-                                    oem_experience_scores.get(supplier_name, 40)
-                                ),
-                            }
-                        )
-                    catalogue_quality_data = pd.DataFrame(
-                        catalogue_quality_rows,
-                        index=df.index,
-                    )
-                    for quality_column in catalogue_quality_data.columns:
-                        if quality_column not in df.columns:
-                            df[quality_column] = catalogue_quality_data[quality_column]
-
-                # Normalize equivalent source labels into the exact canonical
-                # names used by Section 4. Only rename when the canonical
-                # column is absent, so existing values are never overwritten.
-                quality_column_aliases = {
-                    "Inspection Time for Defective Part": "Inspection Time",
-                    "Inspection Time (Hours)": "Inspection Time",
-                    "FMEA Average RPN": "Average RPN",
-                    "FMEA Risk (Average RPN)": "Average RPN",
-                    "Process Capability (Cpk)": "Process Capability",
-                    "Failure Rate (%)": "Failure Rate",
-                    "OEM Experience Score": "OEM Experience",
-                }
-                df.rename(
-                    columns={
-                        source_name: canonical_name
-                        for source_name, canonical_name in quality_column_aliases.items()
-                        if source_name in df.columns and canonical_name not in df.columns
-                    },
-                    inplace=True,
-                )
-
-                supplier_column = (
-                    "Supplier"
-                    if "Supplier" in df.columns
-                    else "Supplier Name"
-                    if "Supplier Name" in df.columns
-                    else None
-                )
-                supplier_row = pd.DataFrame()
-
-                if supplier_column is not None:
-                    selected_supplier_name = str(
-                        selected_record["Supplier Name"]
-                    ).strip().casefold()
-                    supplier_row = df[
-                        df[supplier_column]
-                        .astype(str)
-                        .str.strip()
-                        .str.casefold()
-                        == selected_supplier_name
-                    ]
-
-                    if (
-                        not supplier_row.empty
-                        and "Part Description" in supplier_row.columns
-                    ):
-                        selected_description = str(
-                            selected_record["Part Description"]
-                        ).strip().casefold()
-                        part_rows = supplier_row[
-                            supplier_row["Part Description"]
-                            .astype(str)
-                            .str.strip()
-                            .str.casefold()
-                            == selected_description
-                        ]
-                        if not part_rows.empty:
-                            supplier_row = part_rows
-
-                # Extract the five quality inputs directly from the selected
-                # supplier row using the canonical dataset column names.
-                if not supplier_row.empty:
-                    inspection_time = (
-                        supplier_row["Inspection Time"].iloc[0]
-                        if "Inspection Time" in supplier_row.columns
-                        else "N/A"
-                    )
-                    process_cap = (
-                        supplier_row["Process Capability"].iloc[0]
-                        if "Process Capability" in supplier_row.columns
-                        else "N/A"
-                    )
-                    avg_rpn = (
-                        supplier_row["Average RPN"].iloc[0]
-                        if "Average RPN" in supplier_row.columns
-                        else "N/A"
-                    )
-                    failure_rate = (
-                        supplier_row["Failure Rate"].iloc[0]
-                        if "Failure Rate" in supplier_row.columns
-                        else "N/A"
-                    )
-                    oem_exp = (
-                        supplier_row["OEM Experience"].iloc[0]
-                        if "OEM Experience" in supplier_row.columns
-                        else "N/A"
-                    )
-                else:
-                    inspection_time = process_cap = avg_rpn = failure_rate = oem_exp = "N/A"
-
-                supplier_record = supplier_row.iloc[0] if not supplier_row.empty else None
-
-                def get_numeric_value(
-                    column_name: str,
-                    default: float | None = None,
-                ) -> float | None:
-                    """Safely extract one numeric value from the selected row."""
-                    if supplier_record is None or column_name not in supplier_record.index:
-                        return default
-                    try:
-                        value = float(supplier_record[column_name])
-                    except (TypeError, ValueError):
-                        return default
-                    return value if np.isfinite(value) else default
-
-                process_capability = process_cap
-                average_rpn = avg_rpn
-                oem_experience = oem_exp
-
-                # The local catalogue's old Quality Score is not used; derive
-                # the current score from the five new quality inputs instead.
-                quality_score = (
-                    None
-                    if using_catalogue_fallback
-                    else get_numeric_value("Quality Score")
-                )
-                if quality_score is None and supplier_record is not None:
-                    # Calculate Quality Score from the five exact quality fields
-                    # when the dataset does not provide a precomputed score.
-                    quality_scope = df
-                    if "Part Description" in quality_scope.columns:
-                        selected_description = str(
-                            selected_record["Part Description"]
-                        ).strip().casefold()
-                        description_scope = quality_scope[
-                            quality_scope["Part Description"]
-                            .astype(str)
-                            .str.strip()
-                            .str.casefold()
-                            == selected_description
-                        ]
-                        if not description_scope.empty:
-                            quality_scope = description_scope
-
-                    quality_model_data = quality_scope.copy()
-                    try:
-                        quality_scores, _ = calculate_quality_score(quality_model_data)
-                        quality_score = float(
-                            quality_scores.loc[supplier_record.name]
-                        )
-                    except (KeyError, TypeError, ValueError):
-                        quality_score = None
+                supplier_record = supplier_quality_record(quality_data, selected_record)
+                quality_values = supplier_record if supplier_record is not None else pd.Series(dtype=object)
+                quality_score = quality_values.get("Quality Score")
+                inspection_time = quality_values.get("Inspection Time")
+                process_capability = quality_values.get("Process Capability")
+                average_rpn = quality_values.get("Average RPN")
+                failure_rate = quality_values.get("Failure Rate")
+                oem_experience = quality_values.get("OEM Experience")
 
                 def format_metric(
                     value: Any,
@@ -3685,47 +3631,8 @@ def supplier_database_page() -> None:
             supplier_data["Record ID"].isin(comparison_ids)
         ]
 
-        # Use the same uploaded/default optimization dataset for comparison
-        # details so the cards expose the current quality model fields.
-        comparison_dataset = (
-            df.copy()
-            if isinstance(locals().get("df"), pd.DataFrame)
-            else st.session_state.get("supplier_data")
-        )
-        if not isinstance(comparison_dataset, pd.DataFrame) or comparison_dataset.empty:
-            comparison_dataset = st.session_state.get("supplier_optimization_source_data")
-        if not isinstance(comparison_dataset, pd.DataFrame) or comparison_dataset.empty:
-            comparison_dataset = st.session_state.get("supplier_optimization_default_data")
-        if not isinstance(comparison_dataset, pd.DataFrame) or comparison_dataset.empty:
-            comparison_dataset = supplier_data.copy()
-        comparison_dataset = comparison_dataset.copy()
-        comparison_dataset.columns = [
-            str(column).strip() for column in comparison_dataset.columns
-        ]
-        comparison_dataset.rename(
-            columns={
-                source_name: canonical_name
-                for source_name, canonical_name in {
-                    "Inspection Time for Defective Part": "Inspection Time",
-                    "Inspection Time (Hours)": "Inspection Time",
-                    "FMEA Average RPN": "Average RPN",
-                    "FMEA Risk (Average RPN)": "Average RPN",
-                    "Process Capability (Cpk)": "Process Capability",
-                    "Failure Rate (%)": "Failure Rate",
-                    "OEM Experience Score": "OEM Experience",
-                }.items()
-                if source_name in comparison_dataset.columns
-                and canonical_name not in comparison_dataset.columns
-            },
-            inplace=True,
-        )
-        comparison_supplier_column = (
-            "Supplier"
-            if "Supplier" in comparison_dataset.columns
-            else "Supplier Name"
-            if "Supplier Name" in comparison_dataset.columns
-            else None
-        )
+        # Reuse the profile scores and inputs; comparison does not recalculate them.
+        comparison_dataset = quality_data
 
         def comparison_numeric_value(
             source_row: pd.Series | None,
@@ -3765,36 +3672,7 @@ def supplier_database_page() -> None:
                     with st.container(border=True):
                         st.metric(t("osa_score"), f"{row['OSA Score']:.0f} / 100")
                         st.metric(t("annual_cost"), f"€{row['Annual Cost (€)']:,.0f}")
-                        comparison_quality_row = None
-                        if comparison_supplier_column is not None:
-                            comparison_supplier_name = str(
-                                row["Supplier Name"]
-                            ).strip().casefold()
-                            comparison_matches = comparison_dataset[
-                                comparison_dataset[comparison_supplier_column]
-                                .astype(str)
-                                .str.strip()
-                                .str.casefold()
-                                == comparison_supplier_name
-                            ]
-                            if (
-                                not comparison_matches.empty
-                                and "Part Description" in comparison_matches.columns
-                            ):
-                                comparison_part_description = str(
-                                    row["Part Description"]
-                                ).strip().casefold()
-                                part_matches = comparison_matches[
-                                    comparison_matches["Part Description"]
-                                    .astype(str)
-                                    .str.strip()
-                                    .str.casefold()
-                                    == comparison_part_description
-                                ]
-                                if not part_matches.empty:
-                                    comparison_matches = part_matches
-                            if not comparison_matches.empty:
-                                comparison_quality_row = comparison_matches.iloc[0]
+                        comparison_quality_row = supplier_quality_record(comparison_dataset, row)
 
                         # Display the Quality Score already present in the
                         # selected supplier row; do not recalculate it here.
@@ -4727,15 +4605,7 @@ def run_analysis(
         st.dataframe(corporate_table_style(stage_values), width="stretch")
         return result_for_download(allocation, metrics, stages)
 
-    allocation, metrics = goal_programming(
-        **common_arguments,
-        quality_target=settings["quality_target"],
-        delivery_target=settings["delivery_target"],
-        cost_target=settings["cost_target"],
-        goal_weights=settings["goal_weights"],
-    )
-    display_allocation(allocation, metrics, t("goal_programming_allocation"))
-    return result_for_download(allocation, metrics)
+    raise ValueError("The selected optimization method is not supported by this portal.")
 
 
 def supplier_optimization_page() -> None:
@@ -5864,7 +5734,9 @@ def supplier_optimization_page() -> None:
                 quality_performance_rows,
                 [40 * mm, 24 * mm, 24 * mm, 28 * mm, 24 * mm, 22 * mm, 26 * mm],
             ),
-            Spacer(1, 5 * mm),
+            # Keep Delivery Performance together on a dedicated page so it
+            # cannot be pushed below the printable area by the quality table.
+            PageBreak(),
             Paragraph(safe_text(t("supplier_section_delivery_performance")), section_style),
             styled_table(
                 delivery_performance_rows,
@@ -5943,20 +5815,20 @@ def supplier_optimization_page() -> None:
             f'<div class="optimization-section-heading">{t("optimization_step_method_selection")}</div>',
             unsafe_allow_html=True,
         )
-        method_options = ["Weighted Sum", "TOPSIS", "Goal Programming", "Preemptive Optimization"]
+        method_options = ["Weighted Sum", "TOPSIS", "Preemptive Optimization"]
         method_keys = {
             "Weighted Sum": "method_weighted_sum",
             "TOPSIS": "method_topsis",
-            "Goal Programming": "method_goal_programming",
             "Preemptive Optimization": "method_preemptive",
         }
         method_card_info = [
             ("Weighted Sum", "optimization_method_weighted_sum_summary", "optimization_method_weighted_sum_best_when"),
             ("TOPSIS", "optimization_method_topsis_summary", "optimization_method_topsis_best_when"),
-            ("Goal Programming", "optimization_method_goal_programming_summary", "optimization_method_goal_programming_best_when"),
             ("Preemptive Optimization", "optimization_method_preemptive_summary", "optimization_method_preemptive_best_when"),
         ]
         with st.container(border=True, key="optimization_method_choice"):
+            if st.session_state.get("optimization_method_choice_radio") not in method_options:
+                st.session_state.pop("optimization_method_choice_radio", None)
             selected_method = st.radio(
                 t("optimization_method_selection"),
                 method_options,
@@ -5965,7 +5837,7 @@ def supplier_optimization_page() -> None:
                 key="optimization_method_choice_radio",
             )
             st.caption(t("optimization_method_selection_hint"))
-            method_card_columns = st.columns(4, gap="small")
+            method_card_columns = st.columns(len(method_card_info), gap="small")
             for column, (method_name, summary_key, best_when_key) in zip(method_card_columns, method_card_info):
                 with column:
                     selected_class = "selected" if selected_method == method_name else ""
@@ -6168,9 +6040,8 @@ def supplier_optimization_page() -> None:
             unsafe_allow_html=True,
         )
         method_weights = {"Cost": 0.40, "Quality": 0.35, "Delivery": 0.25}
-        # Goal Programming compares this target against the Annual Purchasing Cost criterion,
-        # so initialize it in the same units as the selected supplier dataset.
-        target_cost = float(evaluated_data["Annual Purchasing Cost"].min())
+        # Preemptive Optimization uses fixed service targets while cost remains
+        # the first priority in the displayed workflow.
         target_quality = 85.0
         target_delivery = 90.0
         priority_order = ["Cost", "Quality", "Delivery"]
@@ -6223,37 +6094,6 @@ def supplier_optimization_page() -> None:
                     """,
                     unsafe_allow_html=True,
                 )
-
-            elif selected_method == "Goal Programming":
-                st.markdown(f"##### {t('optimization_targets_title')}")
-                target_columns = st.columns(3)
-                with target_columns[0]:
-                    target_cost = st.number_input(
-                        t("optimization_target_cost"),
-                        min_value=0.0,
-                        value=target_cost,
-                        step=1.0,
-                        key="optimization_target_cost_input",
-                    )
-                with target_columns[1]:
-                    target_quality = st.number_input(
-                        t("optimization_target_quality"),
-                        min_value=0.0,
-                        max_value=100.0,
-                        value=85.0,
-                        step=1.0,
-                        key="optimization_target_quality_input",
-                    )
-                with target_columns[2]:
-                    target_delivery = st.number_input(
-                        t("optimization_target_delivery"),
-                        min_value=0.0,
-                        max_value=100.0,
-                        value=90.0,
-                        step=1.0,
-                        key="optimization_target_delivery_input",
-                    )
-                st.caption(t("optimization_target_cost_unit"))
 
             else:
                 st.markdown(f"##### {t('optimization_preemptive_title')}")
@@ -6308,7 +6148,6 @@ def supplier_optimization_page() -> None:
             selected_method,
             bool(use_only_qualified),
             tuple(round(method_weights[criterion], 6) for criterion in ["Cost", "Quality", "Delivery"]),
-            round(target_cost, 6),
             round(target_quality, 6),
             round(target_delivery, 6),
             tuple(priority_order),
@@ -6361,30 +6200,16 @@ def supplier_optimization_page() -> None:
                     )
                     capacities = dict(zip(supplier_index, scored_data["Capacity"].astype(float)))
                     demand_units = float(selected_part["Annual Volume"])
-                    if selected_method == "Preemptive Optimization":
-                        allocation, _metrics, _stages = preemptive_optimization(
-                            data=allocation_data,
-                            demand_units=demand_units,
-                            capacities=capacities,
-                            quality_target=target_quality,
-                            delivery_target=100 - target_delivery,
-                            cost_col="Cost",
-                            quality_col="Quality",
-                            delivery_col="Delivery",
-                        )
-                    else:
-                        allocation, _metrics = goal_programming(
-                            data=allocation_data,
-                            demand_units=demand_units,
-                            capacities=capacities,
-                            quality_target=target_quality,
-                            delivery_target=100 - target_delivery,
-                            cost_target=target_cost,
-                            goal_weights={"quality": 0.45, "delivery": 0.35, "cost": 0.20},
-                            cost_col="Cost",
-                            quality_col="Quality",
-                            delivery_col="Delivery",
-                        )
+                    allocation, _metrics, _stages = preemptive_optimization(
+                        data=allocation_data,
+                        demand_units=demand_units,
+                        capacities=capacities,
+                        quality_target=target_quality,
+                        delivery_target=100 - target_delivery,
+                        cost_col="Cost",
+                        quality_col="Quality",
+                        delivery_col="Delivery",
+                    )
                     ranking = pd.DataFrame(
                         {
                             "Rank": allocation["allocation_share"].rank(
@@ -6707,7 +6532,8 @@ def supplier_optimization_page() -> None:
             "Final Score", "Unit Cost", "AVOP", "Annual Purchasing Cost", "Tooling Cost",
             "Total Project Cost", "Material Cost", "Manufacturing Cost", "Administration Cost",
             "Profit", "Quality Score", "Inspection Time", "Process Capability", "Average RPN",
-            "Failure Rate", "OEM Experience", "Delivery", "OSA Score", "Generated At",
+            "Failure Rate", "OEM Experience", "Delivery", "On-Time Delivery", "Lead Time",
+            "Delivery Accuracy", "OSA Score", "Generated At",
         ]
         report_data = report_data[report_columns]
         report_display = report_data.rename(
@@ -6735,6 +6561,9 @@ def supplier_optimization_page() -> None:
                 "Failure Rate": t("optimization_quality_failure_rate"),
                 "OEM Experience": t("optimization_quality_oem_experience"),
                 "Delivery": t("optimization_delivery_score"),
+                "On-Time Delivery": t("on_time_delivery"),
+                "Lead Time": t("lead_time_days"),
+                "Delivery Accuracy": t("delivery_accuracy"),
                 "OSA Score": t("optimization_osa_score"),
                 "Generated At": t("optimization_report_generated_at"),
             }
@@ -6782,51 +6611,67 @@ def supplier_optimization_page() -> None:
                         key="optimization_pdf_download",
                     )
             with excel_column:
-                excel_buffer = io.BytesIO()
-                excel_bytes = None
-                excel_error = None
                 try:
-                    with pd.ExcelWriter(excel_buffer) as writer:
-                        pd.DataFrame(
-                            {
-                                "Field": [
-                                    t("optimization_method_used"),
-                                    t("optimization_selected_part"),
-                                    t("optimization_recommended_supplier"),
-                                    t("optimization_final_score"),
-                                    t("optimization_unit_cost"),
-                                    t("optimization_avop"),
-                                    t("optimization_annual_purchasing_cost"),
-                                    t("optimization_tooling_cost"),
-                                    t("optimization_total_project_cost"),
-                                    t("optimization_quality_score_detail"),
-                                    t("optimization_delivery_score"),
-                                    t("optimization_osa_score"),
-                                    t("optimization_report_generated_at"),
-                                ],
-                                "Value": [
-                                    t(method_keys[method_name]),
-                                    f"{result_part_number} · {result_part['Part Description']}",
-                                    recommended_supplier,
-                                    f"{result_payload['recommended_final_score']:.2f}",
-                                    f"€{recommended_unit_cost:,.2f}",
-                                    f"{recommended_avop:,.0f}",
-                                    f"€{recommended_annual_purchasing_cost:,.0f}",
-                                    f"€{recommended_tooling_cost:,.0f}",
-                                    f"€{recommended_total_project_cost:,.0f}",
-                                    f"{float(recommended_row['Quality']):.2f}",
-                                    f"{float(recommended_row['Delivery']):.2f}",
-                                    f"{float(recommended_row['OSA Score']):.1f}",
-                                    generated_at,
-                                ],
-                            }
-                        ).to_excel(writer, sheet_name="Summary", index=False)
-                        report_display.to_excel(writer, sheet_name="Ranking", index=False)
-                        report_display.to_excel(writer, sheet_name="Performance", index=False)
-                    excel_bytes = excel_buffer.getvalue()
+                    excel_summary_rows = [
+                        (t("optimization_method_used"), t(method_keys[method_name])),
+                        (
+                            t("optimization_selected_part"),
+                            f"{result_part_number} · {result_part['Part Description']}",
+                        ),
+                        (t("optimization_recommended_supplier"), recommended_supplier),
+                        (
+                            t("optimization_final_score"),
+                            f"{result_payload['recommended_final_score']:.2f}",
+                        ),
+                        (t("optimization_unit_cost"), f"€{recommended_unit_cost:,.2f}"),
+                        (t("optimization_avop"), f"{recommended_avop:,.0f}"),
+                        (
+                            t("optimization_annual_purchasing_cost"),
+                            f"€{recommended_annual_purchasing_cost:,.2f}",
+                        ),
+                        (t("optimization_tooling_cost"), f"€{recommended_tooling_cost:,.2f}"),
+                        (
+                            t("optimization_total_project_cost"),
+                            f"€{recommended_total_project_cost:,.2f}",
+                        ),
+                        (
+                            t("optimization_material_cost"),
+                            f"€{float(recommended_row.get('Material Cost', 0)):,.2f}",
+                        ),
+                        (
+                            t("optimization_manufacturing_cost"),
+                            f"€{float(recommended_row.get('Manufacturing Cost', 0)):,.2f}",
+                        ),
+                        (
+                            t("optimization_administration_cost"),
+                            f"€{float(recommended_row.get('Administration Cost', 0)):,.2f}",
+                        ),
+                        (
+                            t("optimization_profit"),
+                            f"€{float(recommended_row.get('Profit', 0)):,.2f}",
+                        ),
+                        (
+                            t("optimization_quality_score_detail"),
+                            f"{float(recommended_row.get('Quality', 0)):,.2f}",
+                        ),
+                        (
+                            t("optimization_delivery_score"),
+                            f"{float(recommended_row.get('Delivery', 0)):,.2f}",
+                        ),
+                        (
+                            t("optimization_osa_score"),
+                            f"{float(recommended_row.get('OSA Score', 0)):,.1f}",
+                        ),
+                        (t("optimization_report_generated_at"), generated_at),
+                    ]
+                    excel_bytes = build_excel_report(
+                        excel_summary_rows,
+                        report_display,
+                        report_display,
+                    )
                 except Exception as error:
-                    excel_error = error
-                if excel_bytes is not None:
+                    st.error(t("optimization_excel_error", error=error))
+                else:
                     st.download_button(
                         t("optimization_export_excel"),
                         data=excel_bytes,
@@ -6834,8 +6679,6 @@ def supplier_optimization_page() -> None:
                         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                         width="stretch",
                     )
-                elif excel_error is not None:
-                    st.error(t("optimization_excel_error", error=excel_error))
 
 
 # -----------------------------------------------------------------------------
