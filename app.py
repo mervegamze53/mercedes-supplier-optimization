@@ -3581,25 +3581,6 @@ def supplier_database_page() -> None:
                     4,
                 )
 
-                st.markdown(
-                    f'<div class="supplier-section-heading">{t("supplier_section_awarding_readiness")}</div>',
-                    unsafe_allow_html=True,
-                )
-                readiness_fields = [
-                    (t("readiness_standard_contract"), "Standard Contract Acceptance"),
-                    (t("readiness_quality_certificate"), "Quality Certificate Status"),
-                    (t("readiness_environmental_certificate"), "Environmental Certificate Status"),
-                    (t("readiness_supplier_risk"), "Supplier Risk Status"),
-                    (t("readiness_fsrm"), "FSRM Status"),
-                ]
-                readiness_columns = st.columns(5)
-                for column, (label, field) in zip(readiness_columns, readiness_fields):
-                    with column:
-                        st.markdown(
-                            f'<div class="supplier-info-label">{label}</div>{status_badge(selected_record[field])}',
-                            unsafe_allow_html=True,
-                        )
-
         # ------------------------------------------------------------------
         # Side-by-side supplier comparison view
         # ------------------------------------------------------------------
